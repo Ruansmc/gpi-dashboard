@@ -1,0 +1,39 @@
+{% extends "base.html" %} {% block content %}
+<h3 class="text-xl font-semibold mb-4">Métricas</h3>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div class="bg-white p-6 rounded shadow">
+    <h4 class="font-semibold mb-2">Uso de CPU</h4>
+    <canvas id="cpuChart" height="120"></canvas>
+  </div>
+
+  <div class="bg-white p-6 rounded shadow">
+    <h4 class="font-semibold mb-2">Uso de Memória</h4>
+    <canvas id="memChart" height="120"></canvas>
+  </div>
+</div>
+
+<script>
+  window.addEventListener("load", () => {
+    // pequenas demos, valores fictícios
+    const c1 = document.getElementById("cpuChart")?.getContext("2d");
+    if (c1)
+      new Chart(c1, {
+        type: "bar",
+        data: {
+          labels: ["A", "B", "C"],
+          datasets: [{ label: "CPU", data: [30, 50, 20] }],
+        },
+      });
+    const c2 = document.getElementById("memChart")?.getContext("2d");
+    if (c2)
+      new Chart(c2, {
+        type: "bar",
+        data: {
+          labels: ["A", "B", "C"],
+          datasets: [{ label: "Mem", data: [40, 20, 60] }],
+        },
+      });
+  });
+</script>
+{% endblock %}

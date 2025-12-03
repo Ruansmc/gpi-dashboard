@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistema Vcenter x CMDB</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+      body {
+        background: #f3f4f6;
+      }
+      #letters .letter {
+        transition: transform 0.25s ease;
+        position: relative;
+      }
+    </style>
+  </head>
+
+  <body class="flex">
+    <!-- 🎥 VÍDEO DE FUNDO -->
+    <video
+      id="bg-video"
+      class="fixed inset-0 w-full h-full object-cover z-40"
+      autoplay
+      muted
+      loop
+      playsinline
+    >
+      <source src="/frontend/static/videos/fundo.mp4" type="video/mp4" />
+    </video>
+
+    <!-- 🔥 LOADER LETRAS FUGINDO -->
+    <div
+      id="gpi-loader"
+      class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 backdrop-blur-md"
+    >
+      <div id="letters" class="flex space-x-12">
+        <span class="letter text-white text-7xl font-extrabold cursor-pointer"
+          >G</span
+        >
+        <span class="letter text-white text-7xl font-extrabold cursor-pointer"
+          >P</span
+        >
+        <span class="letter text-white text-7xl font-extrabold cursor-pointer"
+          >I</span
+        >
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-gray-900 text-gray-100 min-h-screen p-6 shadow-xl">
+      <h1 class="text-xl font-bold mb-6">⚙️ Dashboard</h1>
+
+      <nav class="space-y-3">
+        <button
+          onclick="showPage('home-page')"
+          class="flex items-center gap-2 p-3 w-full text-left rounded hover:bg-gray-700 transition"
+        >
+          🏠 Início
+        </button>
+
+        <button
+          onclick="showPage('vcenter-page')"
+          class="flex items-center gap-2 p-3 w-full text-left rounded hover:bg-gray-700 transition"
+        >
+          🖥️ Vcenter
+        </button>
+
+        <button
+          onclick="showPage('cmdb-page')"
+          class="flex items-center gap-2 p-3 w-full text-left rounded hover:bg-gray-700 transition"
+        >
+          📦 CMDB
+        </button>
+
+        <button
+          onclick="showPage('ideias-page')"
+          class="flex items-center gap-2 p-3 w-full text-left rounded hover:bg-gray-700 transition"
+        >
+          💡 Ideias
+        </button>
+      </nav>
+    </aside>
+
+    <!-- Conteúdo -->
+    <div class="flex-1 p-8">
+      <!-- HOME PAGE (Dashboard principal) -->
+      <div id="home-page">
+        <header class="flex justify-between items-center mb-10">
+          <h2 class="text-3xl font-bold text-gray-800">📊 Métricas Gerais</h2>
+
+          <div class="flex gap-4">
+            <a
+              href="https://teams.microsoft.com"
+              target="_blank"
+              class="px-4 py-2 bg-blue-600 text-white rounded-xl font-semibold shadow hover:bg-blue-700"
+              >Teams</a
+            >
+            <a
+              href="https://outlook.office.com"
+              target="_blank"
+              class="px-4 py-2 bg-indigo-600 text-white rounded-xl font-semibold shadow hover:bg-indigo-700"
+              >Outlook</a
+            >
+            <a
+              href="https://app.powerbi.com"
+              target="_blank"
+              class="px-4 py-2 bg-yellow-600 text-white rounded-xl font-semibold shadow hover:bg-yellow-700"
+              >Power BI</a
+            >
+          </div>
+        </header>
+
+        <section
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12"
+        >
+          <div
+            class="bg-white p-6 rounded-xl shadow hover:shadow-lg transition"
+          >
+            <p class="text-gray-500 text-sm">Máquinas criadas no Vcenter</p>
+            <h3 class="text-4xl font-bold text-gray-900 mt-2">128</h3>
+          </div>
+
+          <div
+            class="bg-white p-6 rounded-xl shadow hover:shadow-lg transition"
+          >
+            <p class="text-gray-500 text-sm">Não cadastradas no CMDB</p>
+            <h3 class="text-4xl font-bold text-red-500 mt-2">7</h3>
+          </div>
+
+          <div
+            class="bg-white p-6 rounded-xl shadow hover:shadow-lg transition"
+          >
+            <p class="text-gray-500 text-sm">Ideias registradas</p>
+            <h3
+              class="text-4xl font-bold text-green-600 mt-2"
+              id="ideias-count"
+            >
+              0
+            </h3>
+          </div>
+        </section>
+      </div>
+
+      <!-- Página de IDEIAS (estilo Resend) -->
+      <div id="ideias-page" class="hidden">
+        <h2 class="text-3xl font-bold mb-6">💡 Ideias Registradas</h2>
+
+        <!-- LISTA DE IDEIAS -->
+        <div id="lista-ideias" class="space-y-4 mb-10"></div>
+
+        <!-- FORM -->
+        <div
+          class="bg-white p-8 rounded-xl shadow-lg max-w-xl border border-gray-200"
+        >
+          <h3 class="text-2xl font-semibold mb-6">➕ Registrar Nova Ideia</h3>
+
+          <form id="form-ideia" class="space-y-6">
+            <div>
+              <label class="block font-medium mb-1">Analista</label>
+              <select
+                id="analista"
+                class="border rounded p-3 w-full bg-gray-50 font-medium"
+              >
+                <option>André</option>
+                <option>Léo</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block font-medium mb-1">Ideia</label>
+              <textarea
+                id="texto"
+                class="border rounded p-3 w-full bg-gray-50 font-medium"
+                rows="4"
+                placeholder="Descreva sua ideia..."
+              ></textarea>
+            </div>
+
+            <button
+              type="submit"
+              class="px-6 py-3 bg-green-600 text-white rounded-xl font-semibold shadow hover:bg-green-700"
+            >
+              Enviar Ideia
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Outras páginas -->
+      <div id="vcenter-page" class="hidden">Vcenter futuramente...</div>
+      <div id="cmdb-page" class="hidden">CMDB futuramente...</div>
+    </div>
+
+    <script>
+      /* ---------------------- IDEIAS LOCAL ----------------------- */
+      const listaIdeias = [];
+
+      function renderIdeias() {
+        const area = document.getElementById("lista-ideias");
+        area.innerHTML = "";
+
+        listaIdeias.forEach((i) => {
+          area.innerHTML += `
+            <div class="p-5 bg-white rounded-xl border border-gray-200 shadow-sm">
+              <p class="text-sm text-gray-600 font-medium">${i.analista}</p>
+              <p class="mt-2 text-gray-900 font-semibold">${i.texto}</p>
+              <p class="text-xs text-gray-400 mt-2">${i.data}</p>
+            </div>
+          `;
+        });
+
+        document.getElementById("ideias-count").innerText = listaIdeias.length;
+      }
+
+      document
+        .getElementById("form-ideia")
+        .addEventListener("submit", async (ev) => {
+          ev.preventDefault();
+
+          const analista = document.getElementById("analista").value;
+          const texto = document.getElementById("texto").value;
+
+          // Adiciona no array local
+          listaIdeias.push({
+            analista,
+            texto,
+            data: new Date().toLocaleString("pt-BR"),
+          });
+
+          renderIdeias();
+
+          document.getElementById("texto").value = "";
+        });
+
+      /* ---------------------- LOADER GPI ----------------------- */
+      const loader = document.getElementById("gpi-loader");
+      const letters = document.querySelectorAll(".letter");
+      const video = document.getElementById("bg-video");
+
+      letters.forEach((letter) => {
+        letter.addEventListener("click", () => {
+          loader.style.transition = "opacity 0.7s ease";
+          loader.style.opacity = "0";
+          setTimeout(() => (loader.style.display = "none"), 700);
+
+          setTimeout(() => {
+            video.style.transition = "opacity 0.7s ease";
+            video.style.opacity = "0";
+            setTimeout(() => (video.style.display = "none"), 700);
+          }, 1000);
+        });
+      });
+
+      /* ---------------------- NAVEGAÇÃO ----------------------- */
+      function showPage(pageId) {
+        const pages = ["home-page", "vcenter-page", "cmdb-page", "ideias-page"];
+
+        pages.forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.classList.add("hidden");
+        });
+
+        document.getElementById(pageId).classList.remove("hidden");
+      }
+    </script>
+  </body>
+</html>

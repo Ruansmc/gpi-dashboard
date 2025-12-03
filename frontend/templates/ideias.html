@@ -1,0 +1,50 @@
+{% extends "base.html" %} {% block content %}
+<h3 class="text-xl font-semibold mb-4">Ideias</h3>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <div class="bg-white p-6 rounded shadow">
+    <h4 class="font-semibold mb-4">Lista de ideias (em memória)</h4>
+    <ul id="lista-ideias" class="space-y-3">
+      <!-- será preenchido por JS -->
+    </ul>
+  </div>
+
+  <div class="bg-white p-6 rounded shadow">
+    <h4 class="font-semibold mb-4">Enviar nova ideia</h4>
+    <form id="form-ideia-page" class="space-y-4">
+      <label class="block text-sm">Analista</label>
+      <select id="analista-page" class="w-full p-2 border rounded">
+        <option>André</option>
+        <option>Léo</option>
+      </select>
+
+      <label class="block text-sm">Ideia</label>
+      <textarea
+        id="texto-page"
+        class="w-full p-2 border rounded"
+        rows="6"
+      ></textarea>
+
+      <div class="flex gap-3">
+        <button class="px-4 py-2 bg-green-600 text-white rounded" type="submit">
+          Enviar
+        </button>
+        <button
+          id="notion-open-2"
+          type="button"
+          class="px-4 py-2 bg-gray-200 rounded"
+        >
+          Abrir Notion
+        </button>
+      </div>
+
+      <div id="msg-page" class="mt-2 text-sm"></div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // a lógica de fetch está centralizada em /static/js/app.js mas
+  // aqui garantimos que a lista seja carregada ao abrir a página
+</script>
+{% endblock %}

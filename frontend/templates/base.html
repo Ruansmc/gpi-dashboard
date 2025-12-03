@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{{ title if title else 'Sistema Vcenter x CMDB' }}</title>
+    <link rel="stylesheet" href="/static/css/taildash.css" />
+
+    <script src="/static/js/app.js"></script>
+    <script src="/static/js/taildash.js"></script>
+
+    <!-- Tailwind CDN (dev) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link rel="stylesheet" href="/static/styles.css" />
+    <style>
+      /* pequenos ajustes para o demo */
+      .sidebar-transition {
+        transition: width 0.2s ease;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 text-gray-900 min-h-screen flex">
+    <!-- SIDEBAR -->
+    <aside
+      id="sidebar"
+      class="sidebar-transition w-64 bg-gray-900 text-gray-100 min-h-screen p-6 fixed left-0 top-0"
+    >
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+          <div class="bg-indigo-600 p-2 rounded-md">
+            <svg
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M3 7h18M3 12h18M3 17h18"
+              />
+            </svg>
+          </div>
+          <h1 class="font-bold text-lg">Dashboard</h1>
+        </div>
+        <button
+          id="btn-toggle"
+          class="text-gray-300 hover:text-white"
+          title="Abrir/fechar sidebar"
+        >
+          <svg
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <nav class="space-y-2">
+        <a
+          href="/dashboard"
+          class="flex items-center gap-3 p-3 rounded hover:bg-gray-800"
+          ><span>🏠</span> <span>Início</span></a
+        >
+        <a
+          href="/metricas"
+          class="flex items-center gap-3 p-3 rounded bg-gray-700"
+          ><span>📊</span> <span>Métricas</span></a
+        >
+        <a
+          href="/vcenter"
+          class="flex items-center gap-3 p-3 rounded hover:bg-gray-800"
+          ><span>🖥️</span> <span>vCenter</span></a
+        >
+        <a
+          href="/cmdb"
+          class="flex items-center gap-3 p-3 rounded hover:bg-gray-800"
+          ><span>📦</span> <span>CMDB</span></a
+        >
+        <a
+          href="/ideias"
+          class="flex items-center gap-3 p-3 rounded hover:bg-gray-800"
+          ><span>💡</span> <span>Ideias</span></a
+        >
+      </nav>
+
+      <div class="mt-6 pt-6 border-t border-gray-800">
+        <a
+          href="https://www.notion.so/"
+          target="_blank"
+          class="block p-3 rounded bg-white text-gray-900 text-sm font-semibold hover:shadow"
+        >
+          🔗 Abrir Notion
+        </a>
+      </div>
+    </aside>
+
+    <!-- MAIN (com offset do sidebar) -->
+    <div id="main" class="flex-1 ml-64 p-8">
+      <!-- Top navbar -->
+      <header class="flex items-center justify-between mb-8">
+        <div>
+          <h2 class="text-2xl font-bold">
+            {{ title if title else 'Sistema de Integração' }}
+          </h2>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <a
+            href="https://teams.microsoft.com"
+            target="_blank"
+            class="px-3 py-2 bg-blue-600 text-white rounded"
+            >Teams</a
+          >
+          <a
+            href="https://outlook.office.com"
+            target="_blank"
+            class="px-3 py-2 bg-indigo-600 text-white rounded"
+            >Outlook</a
+          >
+          <a
+            href="https://app.powerbi.com"
+            target="_blank"
+            class="px-3 py-2 bg-yellow-600 text-white rounded"
+            >Power BI</a
+          >
+        </div>
+      </header>
+
+      <main>{% block content %}{% endblock %}</main>
+    </div>
+
+    <!-- scripts -->
+    <script src="/static/js/app.js"></script>
+  </body>
+</html>
