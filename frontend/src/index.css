@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Loader estilo GPI */
+#loader {
+  @apply fixed inset-0 flex justify-center items-center bg-gray-900 z-50;
+}
+#loader div {
+  @apply w-12 h-12 border-4 border-green-400 border-t-transparent rounded-full animate-spin;
+}
+
+/* Vídeo de fundo */
+#bg-video {
+  @apply fixed top-0 left-0 w-full h-full object-cover -z-10;
+}
