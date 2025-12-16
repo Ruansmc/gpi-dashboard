@@ -1,0 +1,2354 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GPI Docs Manager & Dashboard Vcenter/CMDB</title>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/daisyui@4.4.19/dist/full.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      [x-cloak] {
+        display: none !important;
+      }
+      body {
+        font-family: "Inter", sans-serif;
+      }
+
+      /* Estilos originais da dashboard principal */
+      .login-bg {
+        background: linear-gradient(-45deg, #0f172a, #1e293b, #312e81, #1e3a8a);
+        background-size: 400% 400%;
+        animation: gradient 15s ease infinite;
+      }
+      @keyframes gradient {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
+      .particle {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        animation: float 20s infinite;
+      }
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0) translateX(0);
+          opacity: 0;
+        }
+        10% {
+          opacity: 1;
+        }
+        90% {
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(-100vh) translateX(50px);
+          opacity: 0;
+        }
+      }
+
+      #letters .letter {
+        transition: transform 0.3s ease;
+        cursor: pointer;
+        text-shadow: 0 0 20px rgba(59, 130, 246, 0.8),
+          0 0 40px rgba(59, 130, 246, 0.6), 0 0 60px rgba(59, 130, 246, 0.4);
+        animation: glow 2s ease-in-out infinite;
+      }
+      @keyframes glow {
+        0%,
+        100% {
+          text-shadow: 0 0 20px rgba(59, 130, 246, 0.8),
+            0 0 40px rgba(59, 130, 246, 0.6);
+        }
+        50% {
+          text-shadow: 0 0 30px rgba(59, 130, 246, 1),
+            0 0 60px rgba(59, 130, 246, 0.8), 0 0 90px rgba(59, 130, 246, 0.6);
+        }
+      }
+
+      .glass-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      }
+      .slide-up {
+        animation: slideUp 0.8s ease-out;
+      }
+      @keyframes slideUp {
+        from {
+          transform: translateY(100px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      @keyframes loading {
+        0% {
+          width: 0%;
+        }
+        100% {
+          width: 100%;
+        }
+      }
+
+      .gradient-bg {
+        background: linear-gradient(
+          135deg,
+          #1e3a8a 0%,
+          #3b82f6 50%,
+          #06b6d4 100%
+        );
+      }
+      .gradient-sidebar {
+        background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+      }
+      .card-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+      }
+      .dashboard-enter {
+        animation: dashboardEnter 0.5s ease-out;
+      }
+      @keyframes dashboardEnter {
+        from {
+          opacity: 0;
+          transform: scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div x-data="gpiApp()" x-cloak>
+      <!-- TELA DE LOGIN -->
+      <div
+        x-show="currentScreen === 'login'"
+        class="login-bg fixed inset-0 flex items-center justify-center overflow-hidden"
+        x-transition:leave="transition ease-in duration-500"
+      >
+        <template x-for="i in 20" :key="i">
+          <div
+            class="particle"
+            :style="`width: ${Math.random()*60+20}px; height: ${Math.random()*60+20}px; left: ${Math.random()*100}%; animation-delay: ${Math.random()*20}s; animation-duration: ${Math.random()*10+15}s;`"
+          ></div>
+        </template>
+
+        <div class="relative z-10 text-center">
+          <div id="letters" class="flex space-x-8 mb-12">
+            <span
+              class="letter text-white text-9xl font-black select-none"
+              @mousemove="moveLetterAway($event, $el)"
+              @click="login()"
+              >G</span
+            >
+            <span
+              class="letter text-white text-9xl font-black select-none"
+              @mousemove="moveLetterAway($event, $el)"
+              @click="login()"
+              >P</span
+            >
+            <span
+              class="letter text-white text-9xl font-black select-none"
+              @mousemove="moveLetterAway($event, $el)"
+              @click="login()"
+              >I</span
+            >
+          </div>
+
+          <div class="glass-card rounded-3xl p-8 w-96 mx-auto slide-up">
+            <h2 class="text-3xl font-bold text-white mb-2">Bem-vindo! Ì±ã</h2>
+            <p class="text-gray-300 mb-8">Entre para acessar seu sistema</p>
+            <form @submit.prevent="login()" class="space-y-6">
+              <div class="form-control">
+                <input
+                  type="email"
+                  x-model="loginForm.email"
+                  placeholder="seu@email.com"
+                  class="input input-bordered w-full bg-white/10 text-white border-white/20"
+                  required
+                />
+              </div>
+              <div class="form-control">
+                <input
+                  type="password"
+                  x-model="loginForm.password"
+                  placeholder="‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢"
+                  class="input input-bordered w-full bg-white/10 text-white border-white/20"
+                  required
+                />
+              </div>
+              <button type="submit" class="btn btn-primary btn-lg w-full">
+                Entrar
+              </button>
+            </form>
+            <div class="mt-8 p-4 bg-blue-500/20 rounded-xl">
+              <p class="text-white text-xs">
+                <strong>Demo:</strong> Clique nas letras ou Enter
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LOADER -->
+      <div
+        x-show="currentScreen === 'loading'"
+        class="fixed inset-0 bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900 flex items-center justify-center z-50"
+      >
+        <div class="text-center">
+          <div class="flex space-x-8 mb-8">
+            <span
+              class="text-white text-9xl font-black animate-bounce"
+              style="animation-delay: 0s"
+              >G</span
+            >
+            <span
+              class="text-white text-9xl font-black animate-bounce"
+              style="animation-delay: 0.1s"
+              >P</span
+            >
+            <span
+              class="text-white text-9xl font-black animate-bounce"
+              style="animation-delay: 0.2s"
+              >I</span
+            >
+          </div>
+          <div
+            class="w-64 h-2 bg-white/20 rounded-full overflow-hidden mx-auto"
+          >
+            <div
+              class="h-full bg-gradient-to-r from-blue-400 to-pink-400"
+              style="animation: loading 2.5s ease-in-out forwards"
+            ></div>
+          </div>
+          <p class="text-white/80 text-sm mt-4">Carregando Sistema...</p>
+        </div>
+      </div>
+
+      <!-- DASHBOARD -->
+      <div x-show="currentScreen === 'dashboard'" class="dashboard-enter">
+        <!-- Navbar -->
+        <div class="navbar gradient-bg text-white shadow-2xl sticky top-0 z-50">
+          <div class="flex-1 px-6">
+            <h1 class="text-2xl font-bold">GPI Docs Manager & Dashboard</h1>
+            <p class="text-xs opacity-90">Sistema completo</p>
+          </div>
+          <div class="flex-none gap-4">
+            <input
+              type="text"
+              placeholder="Ì¥ç Buscar..."
+              class="input input-bordered input-sm w-80 bg-white/90 text-gray-800"
+              x-model="searchQuery"
+            />
+            <div class="indicator">
+              <span class="indicator-item badge badge-error badge-sm">3</span>
+              <button class="btn btn-ghost btn-circle">
+                <i class="fas fa-bell text-xl"></i>
+              </button>
+            </div>
+            <div class="dropdown dropdown-end">
+              <label tabindex="0" class="btn btn-ghost btn-circle avatar">
+                <div
+                  class="w-10 rounded-full bg-white/20 flex items-center justify-center"
+                >
+                  <i class="fas fa-user text-xl"></i>
+                </div>
+              </label>
+              <ul
+                tabindex="0"
+                class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow-xl bg-base-100 rounded-box w-52 text-gray-800"
+              >
+                <li class="menu-title"><span>Ruan Carvalho</span></li>
+                <li>
+                  <a><i class="fas fa-user mr-2"></i>Perfil</a>
+                </li>
+                <li>
+                  <a><i class="fas fa-cog mr-2"></i>Configura√ß√µes</a>
+                </li>
+                <li class="border-t mt-2 pt-2">
+                  <a @click="logout()" class="text-error"
+                    ><i class="fas fa-sign-out-alt mr-2"></i>Sair</a
+                  >
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex">
+          <!-- Sidebar com itens originais + novos -->
+          <div class="w-72 min-h-screen gradient-sidebar text-white shadow-2xl">
+            <div class="p-6">
+              <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-6">
+                <div class="flex items-center space-x-3">
+                  <div class="avatar placeholder">
+                    <div class="bg-blue-500 text-white rounded-full w-12">
+                      <span class="text-xl">RC</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p class="font-semibold">Ruan Carvalho</p>
+                    <p class="text-xs opacity-75">Administrador</p>
+                  </div>
+                </div>
+              </div>
+
+              <ul class="menu p-0 space-y-2">
+                <li class="menu-title">
+                  <span class="text-white/60 text-xs">NAVEGA√á√ÉO PRINCIPAL</span>
+                </li>
+                <li>
+                  <a
+                    @click="currentTab = 'dashboard'"
+                    :class="currentTab === 'dashboard' ? 'active bg-blue-600' : ''"
+                    class="rounded-lg"
+                    ><i class="fas fa-chart-line mr-3"></i>Dashboard</a
+                  >
+                </li>
+                <li>
+                  <a
+                    @click="currentTab = 'documents'"
+                    :class="currentTab === 'documents' ? 'active bg-blue-600' : ''"
+                    class="rounded-lg"
+                    ><i class="fas fa-file-alt mr-3"></i>Documentos
+                    <span
+                      class="badge badge-sm bg-blue-500 border-0"
+                      x-text="stats.total_documents"
+                      >24</span
+                    ></a
+                  >
+                </li>
+                <li>
+                  <a
+                    @click="currentTab = 'tips'"
+                    :class="currentTab === 'tips' ? 'active bg-blue-600' : ''"
+                    class="rounded-lg"
+                    ><i class="fas fa-lightbulb mr-3"></i>Dicas L√©o & Pita
+                    <span
+                      class="badge badge-sm bg-green-500 border-0"
+                      x-text="stats.total_tips"
+                      >18</span
+                    ></a
+                  >
+                </li>
+                <li>
+                  <a
+                    @click="currentTab = 'links'"
+                    :class="currentTab === 'links' ? 'active bg-blue-600' : ''"
+                    class="rounded-lg"
+                    ><i class="fas fa-link mr-3"></i>Links √öteis
+                    <span
+                      class="badge badge-sm bg-purple-500 border-0"
+                      x-text="stats.total_links"
+                      >42</span
+                    ></a
+                  >
+                </li>
+
+                <li class="menu-title pt-4 border-t border-white/20">
+                  <span class="text-white/60 text-xs">VCENTER X CMDB</span>
+                </li>
+                <li>
+                  <a
+                    @click="currentTab = 'vcenter_home'"
+                    :class="currentTab === 'vcenter_home' ? 'active bg-blue-600' : ''"
+                    class="rounded-lg"
+                    ><i class="fas fa-home mr-3"></i>In√≠cio Vcenter/CMDB</a
+                  >
+                </li>
+                <li>
+                  <a
+                    @click="currentTab = 'vcenter'"
+                    :class="currentTab === 'vcenter' ? 'active bg-blue-600' : ''"
+                    class="rounded-lg"
+                    ><i class="fas fa-server mr-3"></i>Vcenter</a
+                  >
+                </li>
+                <li>
+                  <a
+                    @click="currentTab = 'cmdb'"
+                    :class="currentTab === 'cmdb' ? 'active bg-blue-600' : ''"
+                    class="rounded-lg"
+                    ><i class="fas fa-database mr-3"></i>CMDB</a
+                  >
+                </li>
+                <li>
+                  <a
+                    @click="currentTab = 'ideias'"
+                    :class="currentTab === 'ideias' ? 'active bg-blue-600' : ''"
+                    class="rounded-lg"
+                    ><i class="fas fa-lightbulb mr-3"></i>Ideias</a
+                  >
+                </li>
+              </ul>
+
+              <div class="mt-8 p-4 bg-white/10 backdrop-blur-sm rounded-xl">
+                <div class="flex justify-between text-xs mb-2">
+                  <span>Armazenamento</span><span>3.2 GB / 10 GB</span>
+                </div>
+                <progress
+                  class="progress progress-primary w-full"
+                  value="32"
+                  max="100"
+                ></progress>
+                <p class="text-xs opacity-75 mt-2">32% utilizado</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Conte√∫do Principal -->
+          <div class="flex-1 p-8 bg-gray-50 overflow-y-auto">
+            <!-- P√°ginas originais -->
+            <div x-show="currentTab === 'dashboard'">
+              <div class="mb-8">
+                <h2 class="text-4xl font-bold text-gray-800 mb-2">Dashboard</h2>
+                <p class="text-gray-600">
+                  Bem-vindo de volta! Aqui est√° um resumo do seu sistema.
+                </p>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div
+                  class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl shadow-xl card-hover p-6"
+                >
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="text-sm opacity-90 mb-1">Total Documentos</p>
+                      <p
+                        class="text-5xl font-bold"
+                        x-text="stats.total_documents"
+                      >
+                        24
+                      </p>
+                      <p class="text-xs opacity-75 mt-2">
+                        <i class="fas fa-arrow-up mr-1"></i>12% este m√™s
+                      </p>
+                    </div>
+                    <div class="bg-white/20 backdrop-blur-sm rounded-2xl p-4">
+                      <i class="fas fa-file-alt text-5xl"></i>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-2xl shadow-xl card-hover p-6"
+                >
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="text-sm opacity-90 mb-1">Dicas Salvas</p>
+                      <p class="text-5xl font-bold" x-text="stats.total_tips">
+                        18
+                      </p>
+                      <p class="text-xs opacity-75 mt-2">
+                        <i class="fas fa-lightbulb mr-1"></i>L√©o & Pita
+                      </p>
+                    </div>
+                    <div class="bg-white/20 backdrop-blur-sm rounded-2xl p-4">
+                      <i class="fas fa-brain text-5xl"></i>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-2xl shadow-xl card-hover p-6"
+                >
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="text-sm opacity-90 mb-1">Links √öteis</p>
+                      <p class="text-5xl font-bold" x-text="stats.total_links">
+                        42
+                      </p>
+                      <p class="text-xs opacity-75 mt-2">
+                        <i class="fas fa-bookmark mr-1"></i>Organizados
+                      </p>
+                    </div>
+                    <div class="bg-white/20 backdrop-blur-sm rounded-2xl p-4">
+                      <i class="fas fa-link text-5xl"></i>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  class="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-2xl shadow-xl card-hover p-6"
+                >
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="text-sm opacity-90 mb-1">Visualiza√ß√µes</p>
+                      <p class="text-5xl font-bold" x-text="stats.total_views">
+                        1.2k
+                      </p>
+                      <p class="text-xs opacity-75 mt-2">
+                        <i class="fas fa-eye mr-1"></i>Esta semana
+                      </p>
+                    </div>
+                    <div class="bg-white/20 backdrop-blur-sm rounded-2xl p-4">
+                      <i class="fas fa-chart-line text-5xl"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div x-show="currentTab === 'documents'">
+              <h2 class="text-4xl font-bold text-gray-800 mb-4">Documentos</h2>
+              <p class="text-gray-600">Ì≥Ñ Gerencie todos os seus arquivos</p>
+            </div>
+            <div x-show="currentTab === 'tips'">
+              <h2 class="text-4xl font-bold text-gray-800 mb-4">
+                Dicas do L√©o & Pita
+              </h2>
+              <p class="text-gray-600">Ì≤° Conhecimento da equipe organizado</p>
+            </div>
+            <div x-show="currentTab === 'links'">
+              <h2 class="text-4xl font-bold text-gray-800 mb-4">Links √öteis</h2>
+              <p class="text-gray-600">Ì¥ó Seus sites favoritos organizados</p>
+            </div>
+
+            <!-- === P√ÅGINAS NOVAS (Vcenter/CMDB) === -->
+
+            <!-- In√≠cio Vcenter/CMDB -->
+            <div x-show="currentTab === 'vcenter_home'">
+              <header class="flex justify-between items-center mb-8">
+                <div>
+                  <h1 class="text-3xl font-bold text-gray-800">
+                    Ì≥ä Dashboard Geral
+                  </h1>
+                  <p class="text-gray-600 mt-1">
+                    Vis√£o geral do sistema Vcenter x CMDB
+                  </p>
+                </div>
+                <div class="flex gap-3">
+                  <a
+                    href="https://teams.microsoft.com"
+                    target="_blank"
+                    class="px-5 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg"
+                    >Teams</a
+                  >
+                  <a
+                    href="https://outlook.office.com"
+                    target="_blank"
+                    class="px-5 py-2.5 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition shadow-lg"
+                    >Outlook</a
+                  >
+                  <a
+                    href="https://app.powerbi.com"
+                    target="_blank"
+                    class="px-5 py-2.5 bg-yellow-500 text-white rounded-lg font-semibold hover:bg-yellow-600 transition shadow-lg"
+                    >Power BI</a
+                  >
+                </div>
+              </header>
+
+              <div
+                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+              >
+                <div
+                  class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition border-l-4 border-blue-500"
+                >
+                  <p
+                    class="text-sm text-gray-500 font-semibold uppercase tracking-wide"
+                  >
+                    Total de VMs
+                  </p>
+                  <h3 class="text-4xl font-bold text-gray-900 mt-2">128</h3>
+                  <p class="text-xs text-green-600 font-semibold mt-2">
+                    ‚Üë 12% este m√™s
+                  </p>
+                </div>
+                <div
+                  class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition border-l-4 border-red-500"
+                >
+                  <p
+                    class="text-sm text-gray-500 font-semibold uppercase tracking-wide"
+                  >
+                    N√£o cadastradas no CMDB
+                  </p>
+                  <h3 class="text-4xl font-bold text-gray-900 mt-2">7</h3>
+                  <p class="text-xs text-red-600 font-semibold mt-2">
+                    Requer aten√ß√£o
+                  </p>
+                </div>
+                <div
+                  class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition border-l-4 border-green-500"
+                >
+                  <p
+                    class="text-sm text-gray-500 font-semibold uppercase tracking-wide"
+                  >
+                    Ideias Registradas
+                  </p>
+                  <h3
+                    class="text-4xl font-bold text-gray-900 mt-2"
+                    id="totalIdeiasHeader"
+                  >
+                    0
+                  </h3>
+                  <p class="text-xs text-gray-600 font-semibold mt-2">
+                    Seja o primeiro!
+                  </p>
+                </div>
+                <div
+                  class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition border-l-4 border-purple-500"
+                >
+                  <p
+                    class="text-sm text-gray-500 font-semibold uppercase tracking-wide"
+                  >
+                    Ativos no CMDB
+                  </p>
+                  <h3 class="text-4xl font-bold text-gray-900 mt-2">256</h3>
+                  <p class="text-xs text-green-600 font-semibold mt-2">
+                    ‚Üë 5% este m√™s
+                  </p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                  <h3 class="text-lg font-bold text-gray-800 mb-4">
+                    Distribui√ß√£o de VMs
+                  </h3>
+                  <div class="space-y-3">
+                    <div>
+                      <div class="flex justify-between text-sm mb-1">
+                        <span class="text-gray-600">VMs Ativas</span
+                        ><span class="font-semibold text-gray-900"
+                          >115 (89.8%)</span
+                        >
+                      </div>
+                      <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          class="bg-green-500 h-2 rounded-full"
+                          style="width: 89.8%"
+                        ></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="flex justify-between text-sm mb-1">
+                        <span class="text-gray-600">VMs Inativas</span
+                        ><span class="font-semibold text-gray-900"
+                          >13 (10.2%)</span
+                        >
+                      </div>
+                      <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          class="bg-yellow-500 h-2 rounded-full"
+                          style="width: 10.2%"
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                  <h3 class="text-lg font-bold text-gray-800 mb-4">
+                    Alertas Recentes
+                  </h3>
+                  <div class="space-y-3">
+                    <div
+                      class="flex items-start gap-3 p-3 bg-red-50 rounded-lg border border-red-200"
+                    >
+                      <span class="text-red-600 text-xl">Ì¥¥</span>
+                      <div>
+                        <p class="font-semibold text-gray-900 text-sm">
+                          7 VMs sem registro no CMDB
+                        </p>
+                        <p class="text-xs text-gray-600 mt-1">H√° 5 horas</p>
+                      </div>
+                    </div>
+                    <div
+                      class="flex items-start gap-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200"
+                    >
+                      <span class="text-yellow-600 text-xl">‚ö†Ô∏è</span>
+                      <div>
+                        <p class="font-semibold text-gray-900 text-sm">
+                          Storage NAS em manuten√ß√£o
+                        </p>
+                        <p class="text-xs text-gray-600 mt-1">H√° 2 horas</p>
+                      </div>
+                    </div>
+                    <div
+                      class="flex items-start gap-3 p-3 bg-green-50 rounded-lg border border-green-200"
+                    >
+                      <span class="text-green-600 text-xl">‚úÖ</span>
+                      <div>
+                        <p class="font-semibold text-gray-900 text-sm">
+                          Backup conclu√≠do com sucesso
+                        </p>
+                        <p class="text-xs text-gray-600 mt-1">H√° 1 dia</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Vcenter -->
+            <div x-show="currentTab === 'vcenter'">
+              <header class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">Ì∂•Ô∏è Vcenter</h1>
+                <p class="text-gray-600 mt-1">
+                  Gerenciamento de m√°quinas virtuais
+                </p>
+              </header>
+              <!-- Cards e tabela completos (igual ao original) -->
+              <div
+                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+              >
+                <!-- 4 cards de VMs -->
+                <div
+                  class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-blue-500"
+                >
+                  <p class="text-sm text-gray-500 font-semibold uppercase">
+                    Total de VMs
+                  </p>
+                  <h3 class="text-4xl font-bold text-gray-900 mt-2">128</h3>
+                </div>
+                <div
+                  class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-green-500"
+                >
+                  <p class="text-sm text-gray-500 font-semibold uppercase">
+                    VMs Ativas
+                  </p>
+                  <h3 class="text-4xl font-bold text-gray-900 mt-2">115</h3>
+                </div>
+                <div
+                  class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-yellow-500"
+                >
+                  <p class="text-sm text-gray-500 font-semibold uppercase">
+                    VMs Inativas
+                  </p>
+                  <h3 class="text-4xl font-bold text-gray-900 mt-2">13</h3>
+                </div>
+                <div
+                  class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-red-500"
+                >
+                  <p class="text-sm text-gray-500 font-semibold uppercase">
+                    Sem registro CMDB
+                  </p>
+                  <h3 class="text-4xl font-bold text-gray-900 mt-2">7</h3>
+                </div>
+              </div>
+              <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="p-6 border-b border-gray-200">
+                  <h3 class="text-xl font-bold text-gray-800">
+                    M√°quinas Virtuais
+                  </h3>
+                </div>
+                <div class="overflow-x-auto">
+                  <table class="w-full">
+                    <thead class="bg-gray-50">
+                      <tr>
+                        <th
+                          class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase"
+                        >
+                          Nome
+                        </th>
+                        <th
+                          class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase"
+                        >
+                          Status
+                        </th>
+                        <th
+                          class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase"
+                        >
+                          CPU
+                        </th>
+                        <th
+                          class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase"
+                        >
+                          RAM
+                        </th>
+                        <th
+                          class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase"
+                        >
+                          A√ß√µes
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                      <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 font-semibold text-gray-900">
+                          VM-WEB-01
+                        </td>
+                        <td class="px-6 py-4">
+                          <span
+                            class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold"
+                            >Ativo</span
+                          >
+                        </td>
+                        <td class="px-6 py-4 text-gray-600">4 vCPUs</td>
+                        <td class="px-6 py-4 text-gray-600">8 GB</td>
+                        <td class="px-6 py-4">
+                          <button
+                            class="text-blue-600 hover:text-blue-800 font-semibold text-sm"
+                          >
+                            Detalhes
+                          </button>
+                        </td>
+                      </tr>
+                      <!-- Outras linhas da tabela -->
+                      <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 font-semibold text-gray-900">
+                          VM-DB-02
+                        </td>
+                        <td class="px-6 py-4">
+                          <span
+                            class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold"
+                            >Ativo</span
+                          >
+                        </td>
+                        <td class="px-6 py-4 text-gray-600">8 vCPUs</td>
+                        <td class="px-6 py-4 text-gray-600">16 GB</td>
+                        <td class="px-6 py-4">
+                          <button
+                            class="text-blue-600 hover:text-blue-800 font-semibold text-sm"
+                          >
+                            Detalhes
+                          </button>
+                        </td>
+                      </tr>
+                      <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 font-semibold text-gray-900">
+                          VM-APP-03
+                        </td>
+                        <td class="px-6 py-4">
+                          <span
+                            class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-semibold"
+                            >Inativo</span
+                          >
+                        </td>
+                        <td class="px-6 py-4 text-gray-600">2 vCPUs</td>
+                        <td class="px-6 py-4 text-gray-600">4 GB</td>
+                        <td class="px-6 py-4">
+                          <button
+                            class="text-blue-600 hover:text-blue-800 font-semibold text-sm"
+                          >
+                            Detalhes
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- CMDB -->
+            <div x-show="currentTab === 'cmdb'">
+              <header class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">Ì≥ã CMDB</h1>
+                <p class="text-gray-600 mt-1">
+                  Configuration Management Database
+                </p>
+              </header>
+              <!-- Cards e tabela de ativos (igual ao original) -->
+              <div
+                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+              >
+                <div
+                  class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-purple-500"
+                >
+                  <p class="text-sm text-gray-500 font-semibold uppercase">
+                    Total de Ativos
+                  </p>
+                  <h3 class="text-4xl font-bold text-gray-900 mt-2">256</h3>
+                </div>
+                <div
+                  class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-green-500"
+                >
+                  <p class="text-sm text-gray-500 font-semibold uppercase">
+                    Ativos Ativos
+                  </p>
+                  <h3 class="text-4xl font-bold text-gray-900 mt-2">240</h3>
+                </div>
+                <div
+                  class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-yellow-500"
+                >
+                  <p class="text-sm text-gray-500 font-semibold uppercase">
+                    Em Manuten√ß√£o
+                  </p>
+                  <h3 class="text-4xl font-bold text-gray-900 mt-2">8</h3>
+                </div>
+                <div
+                  class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-red-500"
+                >
+                  <p class="text-sm text-gray-500 font-semibold uppercase">
+                    Inativos
+                  </p>
+                  <h3 class="text-4xl font-bold text-gray-900 mt-2">8</h3>
+                </div>
+              </div>
+              <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div
+                  class="p-6 border-b border-gray-200 flex justify-between items-center"
+                >
+                  <h3 class="text-xl font-bold text-gray-800">
+                    Ativos Cadastrados
+                  </h3>
+                  <button
+                    class="px-5 py-2.5 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition shadow-lg"
+                  >
+                    + Novo Ativo
+                  </button>
+                </div>
+                <div class="overflow-x-auto">
+                  <table class="w-full">
+                    <thead class="bg-gray-50">
+                      <tr>
+                        <th
+                          class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase"
+                        >
+                          ID
+                        </th>
+                        <th
+                          class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase"
+                        >
+                          Nome
+                        </th>
+                        <th
+                          class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase"
+                        >
+                          Tipo
+                        </th>
+                        <th
+                          class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase"
+                        >
+                          Status
+                        </th>
+                        <th
+                          class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase"
+                        >
+                          A√ß√µes
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                      <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 text-sm text-gray-500">
+                          CMDB-001
+                        </td>
+                        <td class="px-6 py-4 font-semibold text-gray-900">
+                          Servidor Principal
+                        </td>
+                        <td class="px-6 py-4 text-gray-600">Servidor</td>
+                        <td class="px-6 py-4">
+                          <span
+                            class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold"
+                            >Ativo</span
+                          >
+                        </td>
+                        <td class="px-6 py-4">
+                          <button
+                            class="text-blue-600 hover:text-blue-800 font-semibold text-sm mr-3"
+                          >
+                            Editar</button
+                          ><button
+                            class="text-red-600 hover:text-red-800 font-semibold text-sm"
+                          >
+                            Excluir
+                          </button>
+                        </td>
+                      </tr>
+                      <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 text-sm text-gray-500">
+                          CMDB-002
+                        </td>
+                        <td class="px-6 py-4 font-semibold text-gray-900">
+                          Switch Core
+                        </td>
+                        <td class="px-6 py-4 text-gray-600">Rede</td>
+                        <td class="px-6 py-4">
+                          <span
+                            class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold"
+                            >Ativo</span
+                          >
+                        </td>
+                        <td class="px-6 py-4">
+                          <button
+                            class="text-blue-600 hover:text-blue-800 font-semibold text-sm mr-3"
+                          >
+                            Editar</button
+                          ><button
+                            class="text-red-600 hover:text-red-800 font-semibold text-sm"
+                          >
+                            Excluir
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Ideias -->
+            <div x-show="currentTab === 'ideias'">
+              <header class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">Ì≤° Ideias</h1>
+                <p class="text-gray-600 mt-1">
+                  Registre suas ideias e sugest√µes de melhorias
+                </p>
+              </header>
+
+              <div class="bg-white p-8 rounded-xl shadow-lg mb-8">
+                <h3 class="text-xl font-bold text-gray-800 mb-6">Nova Ideia</h3>
+                <form id="formIdeia" class="space-y-6">
+                  <div>
+                    <label
+                      class="block text-sm font-semibold text-gray-700 mb-2"
+                      >T√≠tulo</label
+                    ><input
+                      type="text"
+                      id="titulo"
+                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="Ex: Automatizar backup de VMs"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label
+                      class="block text-sm font-semibold text-gray-700 mb-2"
+                      >Descri√ß√£o</label
+                    ><textarea
+                      id="descricao"
+                      rows="5"
+                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="Descreva sua ideia em detalhes..."
+                      required
+                    ></textarea>
+                  </div>
+                  <div>
+                    <label
+                      class="block text-sm font-semibold text-gray-700 mb-2"
+                      >Autor</label
+                    ><input
+                      type="text"
+                      id="autor"
+                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="Seu nome"
+                      required
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    class="w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg font-bold hover:from-blue-700 hover:to-cyan-700 transition shadow-lg"
+                  >
+                    Registrar Ideia
+                  </button>
+                </form>
+              </div>
+
+              <div class="bg-white p-8 rounded-xl shadow-lg">
+                <h3 class="text-xl font-bold text-gray-800 mb-6">
+                  Ideias Registradas (<span id="totalIdeias">0</span>)
+                </h3>
+                <div id="listaIdeias" class="space-y-4">
+                  <p class="text-center text-gray-500 py-12">
+                    Nenhuma ideia registrada ainda. Seja o primeiro!
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function gpiApp() {
+        return {
+          currentScreen: "login",
+          currentTab: "dashboard",
+          loginForm: { email: "", password: "", remember: false },
+          searchQuery: "",
+          stats: {
+            total_documents: 24,
+            total_tips: 18,
+            total_links: 42,
+            total_views: 1245,
+          },
+
+          login() {
+            this.currentScreen = "loading";
+            setTimeout(() => {
+              this.currentScreen = "dashboard";
+            }, 2500);
+          },
+          logout() {
+            this.currentScreen = "login";
+            this.loginForm = { email: "", password: "", remember: false };
+          },
+          moveLetterAway(event, element) {
+            const rect = element.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const deltaX = event.clientX - centerX;
+            const deltaY = event.clientY - centerY;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            if (distance < 150) {
+              element.style.transform = `translate(${-deltaX / 3}px, ${
+                -deltaY / 3
+              }px) scale(1.1)`;
+            } else {
+              element.style.transform = "translate(0, 0) scale(1)";
+            }
+          },
+        };
+      }
+
+      // JavaScript completo das Ideias (funciona perfeitamente)
+      const ideias = [];
+      document.getElementById("formIdeia")?.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const titulo = document.getElementById("titulo").value;
+        const descricao = document.getElementById("descricao").value;
+        const autor = document.getElementById("autor").value;
+
+        ideias.push({
+          id: Date.now(),
+          titulo,
+          descricao,
+          autor,
+          data: new Date().toLocaleDateString("pt-BR"),
+        });
+
+        document.getElementById("totalIdeias").textContent = ideias.length;
+        document.getElementById("totalIdeiasHeader").textContent =
+          ideias.length;
+        renderIdeias();
+        e.target.reset();
+      });
+
+      function renderIdeias() {
+        const lista = document.getElementById("listaIdeias");
+        if (ideias.length === 0) {
+          lista.innerHTML =
+            '<p class="text-center text-gray-500 py-12">Nenhuma ideia registrada ainda. Seja o primeiro!</p>';
+          return;
+        }
+        lista.innerHTML = ideias
+          .map(
+            (ideia) => `
+          <div class="border border-gray-200 p-6 rounded-lg hover:shadow-lg transition">
+            <div class="flex justify-between items-start mb-3">
+              <h4 class="font-bold text-lg text-gray-800">${ideia.titulo}</h4>
+              <span class="text-sm text-gray-500">${ideia.data}</span>
+            </div>
+            <p class="text-gray-600 mb-4">${ideia.descricao}</p>
+            <p class="text-sm text-gray-500"><strong>Autor:</strong> ${ideia.autor}</p>
+          </div>
+        `
+          )
+          .join("");
+      }
+    </script>
+  </body>
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GPI Docs Manager & Dashboard Vcenter/CMDB</title>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/daisyui@4.4.19/dist/full.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      [x-cloak] {
+        display: none !important;
+      }
+      body {
+        font-family: "Inter", sans-serif;
+      }
+
+      /* Estilos originais da dashboard principal */
+      .login-bg {
+        background: linear-gradient(-45deg, #0f172a, #1e293b, #312e81, #1e3a8a);
+        background-size: 400% 400%;
+        animation: gradient 15s ease infinite;
+      }
+      @keyframes gradient {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
+      .particle {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        animation: float 20s infinite;
+      }
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0) translateX(0);
+          opacity: 0;
+        }
+        10% {
+          opacity: 1;
+        }
+        90% {
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(-100vh) translateX(50px);
+          opacity: 0;
+        }
+      }
+
+      #letters .letter {
+        transition: transform 0.3s ease;
+        cursor: pointer;
+        text-shadow: 0 0 20px rgba(59, 130, 246, 0.8),
+          0 0 40px rgba(59, 130, 246, 0.6), 0 0 60px rgba(59, 130, 246, 0.4);
+        animation: glow 2s ease-in-out infinite;
+      }
+      @keyframes glow {
+        0%,
+        100% {
+          text-shadow: 0 0 20px rgba(59, 130, 246, 0.8),
+            0 0 40px rgba(59, 130, 246, 0.6);
+        }
+        50% {
+          text-shadow: 0 0 30px rgba(59, 130, 246, 1),
+            0 0 60px rgba(59, 130, 246, 0.8), 0 0 90px rgba(59, 130, 246, 0.6);
+        }
+      }
+
+      .glass-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      }
+      .slide-up {
+        animation: slideUp 0.8s ease-out;
+      }
+      @keyframes slideUp {
+        from {
+          transform: translateY(100px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      @keyframes loading {
+        0% {
+          width: 0%;
+        }
+        100% {
+          width: 100%;
+        }
+      }
+
+      .gradient-bg {
+        background: linear-gradient(
+          135deg,
+          #1e3a8a 0%,
+          #3b82f6 50%,
+          #06b6d4 100%
+        );
+      }
+      .gradient-sidebar {
+        background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+      }
+      .card-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+      }
+      .dashboard-enter {
+        animation: dashboardEnter 0.5s ease-out;
+      }
+      @keyframes dashboardEnter {
+        from {
+          opacity: 0;
+          transform: scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div x-data="gpiApp()" x-cloak>
+      <!-- TELA DE LOGIN -->
+      <div
+        x-show="currentScreen === 'login'"
+        class="login-bg fixed inset-0 flex items-center justify-center overflow-hidden"
+        x-transition:leave="transition ease-in duration-500"
+      >
+        <template x-for="i in 20" :key="i">
+          <div
+            class="particle"
+            :style="`width: ${Math.random()*60+20}px; height: ${Math.random()*60+20}px; left: ${Math.random()*100}%; animation-delay: ${Math.random()*20}s; animation-duration: ${Math.random()*10+15}s;`"
+          ></div>
+        </template>
+
+        <div class="relative z-10 text-center">
+          <div id="letters" class="flex space-x-8 mb-12">
+            <span
+              class="letter text-white text-9xl font-black select-none"
+              @mousemove="moveLetterAway($event, $el)"
+              @click="login()"
+              >G</span
+            >
+            <span
+              class="letter text-white text-9xl font-black select-none"
+              @mousemove="moveLetterAway($event, $el)"
+              @click="login()"
+              >P</span
+            >
+            <span
+              class="letter text-white text-9xl font-black select-none"
+              @mousemove="moveLetterAway($event, $el)"
+              @click="login()"
+              >I</span
+            >
+          </div>
+
+          <div class="glass-card rounded-3xl p-8 w-96 mx-auto slide-up">
+            <h2 class="text-3xl font-bold text-white mb-2">Bem-vindo! Ì±ã</h2>
+            <p class="text-gray-300 mb-8">Entre para acessar seu sistema</p>
+            <form @submit.prevent="login()" class="space-y-6">
+              <div class="form-control">
+                <input
+                  type="email"
+                  x-model="loginForm.email"
+                  placeholder="seu@email.com"
+                  class="input input-bordered w-full bg-white/10 text-white border-white/20"
+                  required
+                />
+              </div>
+              <div class="form-control">
+                <input
+                  type="password"
+                  x-model="loginForm.password"
+                  placeholder="‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢‚Ä¢"
+                  class="input input-bordered w-full bg-white/10 text-white border-white/20"
+                  required
+                />
+              </div>
+              <button type="submit" class="btn btn-primary btn-lg w-full">
+                Entrar
+              </button>
+            </form>
+            <div class="mt-8 p-4 bg-blue-500/20 rounded-xl">
+              <p class="text-white text-xs">
+                <strong>Demo:</strong> Clique nas letras ou Enter
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LOADER -->
+      <div
+        x-show="currentScreen === 'loading'"
+        class="fixed inset-0 bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900 flex items-center justify-center z-50"
+      >
+        <div class="text-center">
+          <div class="flex space-x-8 mb-8">
+            <span
+              class="text-white text-9xl font-black animate-bounce"
+              style="animation-delay: 0s"
+              >G</span
+            >
+            <span
+              class="text-white text-9xl font-black animate-bounce"
+              style="animation-delay: 0.1s"
+              >P</span
+            >
+            <span
+              class="text-white text-9xl font-black animate-bounce"
+              style="animation-delay: 0.2s"
+              >I</span
+            >
+          </div>
+          <div
+            class="w-64 h-2 bg-white/20 rounded-full overflow-hidden mx-auto"
+          >
+            <div
+              class="h-full bg-gradient-to-r from-blue-400 to-pink-400"
+              style="animation: loading 2.5s ease-in-out forwards"
+            ></div>
+          </div>
+          <p class="text-white/80 text-sm mt-4">Carregando Sistema...</p>
+        </div>
+      </div>
+
+      <!-- DASHBOARD -->
+      <div x-show="currentScreen === 'dashboard'" class="dashboard-enter">
+        <!-- Navbar -->
+        <div class="navbar gradient-bg text-white shadow-2xl sticky top-0 z-50">
+          <div class="flex-1 px-6">
+            <h1 class="text-2xl font-bold">GPI Docs Manager & Dashboard</h1>
+            <p class="text-xs opacity-90">Sistema completo</p>
+          </div>
+          <div class="flex-none gap-4">
+            <input
+              type="text"
+              placeholder="Ì¥ç Buscar..."
+              class="input input-bordered input-sm w-80 bg-white/90 text-gray-800"
+              x-model="searchQuery"
+            />
+            <div class="indicator">
+              <span class="indicator-item badge badge-error badge-sm">3</span>
+              <button class="btn btn-ghost btn-circle">
+                <i class="fas fa-bell text-xl"></i>
+              </button>
+            </div>
+            <div class="dropdown dropdown-end">
+              <label tabindex="0" class="btn btn-ghost btn-circle avatar">
+                <div
+                  class="w-10 rounded-full bg-white/20 flex items-center justify-center"
+                >
+                  <i class="fas fa-user text-xl"></i>
+                </div>
+              </label>
+              <ul
+                tabindex="0"
+                class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow-xl bg-base-100 rounded-box w-52 text-gray-800"
+              >
+                <li class="menu-title"><span>Ruan Carvalho</span></li>
+                <li>
+                  <a><i class="fas fa-user mr-2"></i>Perfil</a>
+                </li>
+                <li>
+                  <a><i class="fas fa-cog mr-2"></i>Configura√ß√µes</a>
+                </li>
+                <li class="border-t mt-2 pt-2">
+                  <a @click="logout()" class="text-error"
+                    ><i class="fas fa-sign-out-alt mr-2"></i>Sair</a
+                  >
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex">
+          <!-- Sidebar com itens originais + novos -->
+          <div class="w-72 min-h-screen gradient-sidebar text-white shadow-2xl">
+            <div class="p-6">
+              <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-6">
+                <div class="flex items-center space-x-3">
+                  <div class="avatar placeholder">
+                    <div class="bg-blue-500 text-white rounded-full w-12">
+                      <span class="text-xl">RC</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p class="font-semibold">Ruan Carvalho</p>
+                    <p class="text-xs opacity-75">Administrador</p>
+                  </div>
+                </div>
+              </div>
+
+              <ul class="menu p-0 space-y-2">
+                <li class="menu-title">
+                  <span class="text-white/60 text-xs">NAVEGA√á√ÉO PRINCIPAL</span>
+                </li>
+                <li>
+                  <a
+                    @click="currentTab = 'dashboard'"
+                    :class="currentTab === 'dashboard' ? 'active bg-blue-600' : ''"
+                    class="rounded-lg"
+                    ><i class="fas fa-chart-line mr-3"></i>Dashboard</a
+                  >
+                </li>
+                <li>
+                  <a
+                    @click="currentTab = 'documents'"
+                    :class="currentTab === 'documents' ? 'active bg-blue-600' : ''"
+                    class="rounded-lg"
+                    ><i class="fas fa-file-alt mr-3"></i>Documentos
+                    <span
+                      class="badge badge-sm bg-blue-500 border-0"
+                      x-text="stats.total_documents"
+                      >24</span
+                    ></a
+                  >
+                </li>
+                <li>
+                  <a
+                    @click="currentTab = 'tips'"
+                    :class="currentTab === 'tips' ? 'active bg-blue-600' : ''"
+                    class="rounded-lg"
+                    ><i class="fas fa-lightbulb mr-3"></i>Dicas L√©o & Pita
+                    <span
+                      class="badge badge-sm bg-green-500 border-0"
+                      x-text="stats.total_tips"
+                      >18</span
+                    ></a
+                  >
+                </li>
+                <li>
+                  <a
+                    @click="currentTab = 'links'"
+                    :class="currentTab === 'links' ? 'active bg-blue-600' : ''"
+                    class="rounded-lg"
+                    ><i class="fas fa-link mr-3"></i>Links √öteis
+                    <span
+                      class="badge badge-sm bg-purple-500 border-0"
+                      x-text="stats.total_links"
+                      >42</span
+                    ></a
+                  >
+                </li>
+
+                <li class="menu-title pt-4 border-t border-white/20">
+                  <span class="text-white/60 text-xs">VCENTER X CMDB</span>
+                </li>
+                <li>
+                  <a
+                    @click="currentTab = 'vcenter_home'"
+                    :class="currentTab === 'vcenter_home' ? 'active bg-blue-600' : ''"
+                    class="rounded-lg"
+                    ><i class="fas fa-home mr-3"></i>In√≠cio Vcenter/CMDB</a
+                  >
+                </li>
+                <li>
+                  <a
+                    @click="currentTab = 'vcenter'"
+                    :class="currentTab === 'vcenter' ? 'active bg-blue-600' : ''"
+                    class="rounded-lg"
+                    ><i class="fas fa-server mr-3"></i>Vcenter</a
+                  >
+                </li>
+                <li>
+                  <a
+                    @click="currentTab = 'cmdb'"
+                    :class="currentTab === 'cmdb' ? 'active bg-blue-600' : ''"
+                    class="rounded-lg"
+                    ><i class="fas fa-database mr-3"></i>CMDB</a
+                  >
+                </li>
+                <li>
+                  <a
+                    @click="currentTab = 'ideias'"
+                    :class="currentTab === 'ideias' ? 'active bg-blue-600' : ''"
+                    class="rounded-lg"
+                    ><i class="fas fa-lightbulb mr-3"></i>Ideias</a
+                  >
+                </li>
+              </ul>
+
+              <div class="mt-8 p-4 bg-white/10 backdrop-blur-sm rounded-xl">
+                <div class="flex justify-between text-xs mb-2">
+                  <span>Armazenamento</span><span>3.2 GB / 10 GB</span>
+                </div>
+                <progress
+                  class="progress progress-primary w-full"
+                  value="32"
+                  max="100"
+                ></progress>
+                <p class="text-xs opacity-75 mt-2">32% utilizado</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Conte√∫do Principal -->
+          <div class="flex-1 p-8 bg-gray-50 overflow-y-auto">
+            <!-- P√°ginas originais -->
+            <div x-show="currentTab === 'dashboard'">
+              <div class="mb-8">
+                <h2 class="text-4xl font-bold text-gray-800 mb-2">Dashboard</h2>
+                <p class="text-gray-600">
+                  Bem-vindo de volta! Aqui est√° um resumo do seu sistema.
+                </p>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div
+                  class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl shadow-xl card-hover p-6"
+                >
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="text-sm opacity-90 mb-1">Total Documentos</p>
+                      <p
+                        class="text-5xl font-bold"
+                        x-text="stats.total_documents"
+                      >
+                        24
+                      </p>
+                      <p class="text-xs opacity-75 mt-2">
+                        <i class="fas fa-arrow-up mr-1"></i>12% este m√™s
+                      </p>
+                    </div>
+                    <div class="bg-white/20 backdrop-blur-sm rounded-2xl p-4">
+                      <i class="fas fa-file-alt text-5xl"></i>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-2xl shadow-xl card-hover p-6"
+                >
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="text-sm opacity-90 mb-1">Dicas Salvas</p>
+                      <p class="text-5xl font-bold" x-text="stats.total_tips">
+                        18
+                      </p>
+                      <p class="text-xs opacity-75 mt-2">
+                        <i class="fas fa-lightbulb mr-1"></i>L√©o & Pita
+                      </p>
+                    </div>
+                    <div class="bg-white/20 backdrop-blur-sm rounded-2xl p-4">
+                      <i class="fas fa-brain text-5xl"></i>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-2xl shadow-xl card-hover p-6"
+                >
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="text-sm opacity-90 mb-1">Links √öteis</p>
+                      <p class="text-5xl font-bold" x-text="stats.total_links">
+                        42
+                      </p>
+                      <p class="text-xs opacity-75 mt-2">
+                        <i class="fas fa-bookmark mr-1"></i>Organizados
+                      </p>
+                    </div>
+                    <div class="bg-white/20 backdrop-blur-sm rounded-2xl p-4">
+                      <i class="fas fa-link text-5xl"></i>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  class="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-2xl shadow-xl card-hover p-6"
+                >
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="text-sm opacity-90 mb-1">Visualiza√ß√µes</p>
+                      <p class="text-5xl font-bold" x-text="stats.total_views">
+                        1.2k
+                      </p>
+                      <p class="text-xs opacity-75 mt-2">
+                        <i class="fas fa-eye mr-1"></i>Esta semana
+                      </p>
+                    </div>
+                    <div class="bg-white/20 backdrop-blur-sm rounded-2xl p-4">
+                      <i class="fas fa-chart-line text-5xl"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div x-show="currentTab === 'documents'">
+              <h2 class="text-4xl font-bold text-gray-800 mb-4">Documentos</h2>
+              <p class="text-gray-600">Ì≥Ñ Gerencie todos os seus arquivos</p>
+            </div>
+            <div x-show="currentTab === 'tips'">
+              <h2 class="text-4xl font-bold text-gray-800 mb-4">
+                Dicas do L√©o & Pita
+              </h2>
+              <p class="text-gray-600">Ì≤° Conhecimento da equipe organizado</p>
+            </div>
+            <div x-show="currentTab === 'links'">
+              <h2 class="text-4xl font-bold text-gray-800 mb-4">Links √öteis</h2>
+              <p class="text-gray-600">Ì¥ó Seus sites favoritos organizados</p>
+            </div>
+
+            <!-- === P√ÅGINAS NOVAS (Vcenter/CMDB) === -->
+
+            <!-- In√≠cio Vcenter/CMDB -->
+            <div x-show="currentTab === 'vcenter_home'">
+              <header class="flex justify-between items-center mb-8">
+                <div>
+                  <h1 class="text-3xl font-bold text-gray-800">
+                    Ì≥ä Dashboard Geral
+                  </h1>
+                  <p class="text-gray-600 mt-1">
+                    Vis√£o geral do sistema Vcenter x CMDB
+                  </p>
+                </div>
+                <div class="flex gap-3">
+                  <a
+                    href="https://teams.microsoft.com"
+                    target="_blank"
+                    class="px-5 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg"
+                    >Teams</a
+                  >
+                  <a
+                    href="https://outlook.office.com"
+                    target="_blank"
+                    class="px-5 py-2.5 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition shadow-lg"
+                    >Outlook</a
+                  >
+                  <a
+                    href="https://app.powerbi.com"
+                    target="_blank"
+                    class="px-5 py-2.5 bg-yellow-500 text-white rounded-lg font-semibold hover:bg-yellow-600 transition shadow-lg"
+                    >Power BI</a
+                  >
+                </div>
+              </header>
+
+              <div
+                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+              >
+                <div
+                  class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition border-l-4 border-blue-500"
+                >
+                  <p
+                    class="text-sm text-gray-500 font-semibold uppercase tracking-wide"
+                  >
+                    Total de VMs
+                  </p>
+                  <h3 class="text-4xl font-bold text-gray-900 mt-2">128</h3>
+                  <p class="text-xs text-green-600 font-semibold mt-2">
+                    ‚Üë 12% este m√™s
+                  </p>
+                </div>
+                <div
+                  class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition border-l-4 border-red-500"
+                >
+                  <p
+                    class="text-sm text-gray-500 font-semibold uppercase tracking-wide"
+                  >
+                    N√£o cadastradas no CMDB
+                  </p>
+                  <h3 class="text-4xl font-bold text-gray-900 mt-2">7</h3>
+                  <p class="text-xs text-red-600 font-semibold mt-2">
+                    Requer aten√ß√£o
+                  </p>
+                </div>
+                <div
+                  class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition border-l-4 border-green-500"
+                >
+                  <p
+                    class="text-sm text-gray-500 font-semibold uppercase tracking-wide"
+                  >
+                    Ideias Registradas
+                  </p>
+                  <h3
+                    class="text-4xl font-bold text-gray-900 mt-2"
+                    id="totalIdeiasHeader"
+                  >
+                    0
+                  </h3>
+                  <p class="text-xs text-gray-600 font-semibold mt-2">
+                    Seja o primeiro!
+                  </p>
+                </div>
+                <div
+                  class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition border-l-4 border-purple-500"
+                >
+                  <p
+                    class="text-sm text-gray-500 font-semibold uppercase tracking-wide"
+                  >
+                    Ativos no CMDB
+                  </p>
+                  <h3 class="text-4xl font-bold text-gray-900 mt-2">256</h3>
+                  <p class="text-xs text-green-600 font-semibold mt-2">
+                    ‚Üë 5% este m√™s
+                  </p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                  <h3 class="text-lg font-bold text-gray-800 mb-4">
+                    Distribui√ß√£o de VMs
+                  </h3>
+                  <div class="space-y-3">
+                    <div>
+                      <div class="flex justify-between text-sm mb-1">
+                        <span class="text-gray-600">VMs Ativas</span
+                        ><span class="font-semibold text-gray-900"
+                          >115 (89.8%)</span
+                        >
+                      </div>
+                      <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          class="bg-green-500 h-2 rounded-full"
+                          style="width: 89.8%"
+                        ></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="flex justify-between text-sm mb-1">
+                        <span class="text-gray-600">VMs Inativas</span
+                        ><span class="font-semibold text-gray-900"
+                          >13 (10.2%)</span
+                        >
+                      </div>
+                      <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          class="bg-yellow-500 h-2 rounded-full"
+                          style="width: 10.2%"
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                  <h3 class="text-lg font-bold text-gray-800 mb-4">
+                    Alertas Recentes
+                  </h3>
+                  <div class="space-y-3">
+                    <div
+                      class="flex items-start gap-3 p-3 bg-red-50 rounded-lg border border-red-200"
+                    >
+                      <span class="text-red-600 text-xl">Ì¥¥</span>
+                      <div>
+                        <p class="font-semibold text-gray-900 text-sm">
+                          7 VMs sem registro no CMDB
+                        </p>
+                        <p class="text-xs text-gray-600 mt-1">H√° 5 horas</p>
+                      </div>
+                    </div>
+                    <div
+                      class="flex items-start gap-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200"
+                    >
+                      <span class="text-yellow-600 text-xl">‚ö†Ô∏è</span>
+                      <div>
+                        <p class="font-semibold text-gray-900 text-sm">
+                          Storage NAS em manuten√ß√£o
+                        </p>
+                        <p class="text-xs text-gray-600 mt-1">H√° 2 horas</p>
+                      </div>
+                    </div>
+                    <div
+                      class="flex items-start gap-3 p-3 bg-green-50 rounded-lg border border-green-200"
+                    >
+                      <span class="text-green-600 text-xl">‚úÖ</span>
+                      <div>
+                        <p class="font-semibold text-gray-900 text-sm">
+                          Backup conclu√≠do com sucesso
+                        </p>
+                        <p class="text-xs text-gray-600 mt-1">H√° 1 dia</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Vcenter -->
+            <div x-show="currentTab === 'vcenter'">
+              <header class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">Ì∂•Ô∏è Vcenter</h1>
+                <p class="text-gray-600 mt-1">
+                  Gerenciamento de m√°quinas virtuais
+                </p>
+              </header>
+              <!-- Cards e tabela completos (igual ao original) -->
+              <div
+                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+              >
+                <!-- 4 cards de VMs -->
+                <div
+                  class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-blue-500"
+                >
+                  <p class="text-sm text-gray-500 font-semibold uppercase">
+                    Total de VMs
+                  </p>
+                  <h3 class="text-4xl font-bold text-gray-900 mt-2">128</h3>
+                </div>
+                <div
+                  class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-green-500"
+                >
+                  <p class="text-sm text-gray-500 font-semibold uppercase">
+                    VMs Ativas
+                  </p>
+                  <h3 class="text-4xl font-bold text-gray-900 mt-2">115</h3>
+                </div>
+                <div
+                  class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-yellow-500"
+                >
+                  <p class="text-sm text-gray-500 font-semibold uppercase">
+                    VMs Inativas
+                  </p>
+                  <h3 class="text-4xl font-bold text-gray-900 mt-2">13</h3>
+                </div>
+                <div
+                  class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-red-500"
+                >
+                  <p class="text-sm text-gray-500 font-semibold uppercase">
+                    Sem registro CMDB
+                  </p>
+                  <h3 class="text-4xl font-bold text-gray-900 mt-2">7</h3>
+                </div>
+              </div>
+              <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="p-6 border-b border-gray-200">
+                  <h3 class="text-xl font-bold text-gray-800">
+                    M√°quinas Virtuais
+                  </h3>
+                </div>
+                <div class="overflow-x-auto">
+                  <table class="w-full">
+                    <thead class="bg-gray-50">
+                      <tr>
+                        <th
+                          class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase"
+                        >
+                          Nome
+                        </th>
+                        <th
+                          class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase"
+                        >
+                          Status
+                        </th>
+                        <th
+                          class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase"
+                        >
+                          CPU
+                        </th>
+                        <th
+                          class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase"
+                        >
+                          RAM
+                        </th>
+                        <th
+                          class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase"
+                        >
+                          A√ß√µes
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                      <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 font-semibold text-gray-900">
+                          VM-WEB-01
+                        </td>
+                        <td class="px-6 py-4">
+                          <span
+                            class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold"
+                            >Ativo</span
+                          >
+                        </td>
+                        <td class="px-6 py-4 text-gray-600">4 vCPUs</td>
+                        <td class="px-6 py-4 text-gray-600">8 GB</td>
+                        <td class="px-6 py-4">
+                          <button
+                            class="text-blue-600 hover:text-blue-800 font-semibold text-sm"
+                          >
+                            Detalhes
+                          </button>
+                        </td>
+                      </tr>
+                      <!-- Outras linhas da tabela -->
+                      <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 font-semibold text-gray-900">
+                          VM-DB-02
+                        </td>
+                        <td class="px-6 py-4">
+                          <span
+                            class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold"
+                            >Ativo</span
+                          >
+                        </td>
+                        <td class="px-6 py-4 text-gray-600">8 vCPUs</td>
+                        <td class="px-6 py-4 text-gray-600">16 GB</td>
+                        <td class="px-6 py-4">
+                          <button
+                            class="text-blue-600 hover:text-blue-800 font-semibold text-sm"
+                          >
+                            Detalhes
+                          </button>
+                        </td>
+                      </tr>
+                      <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 font-semibold text-gray-900">
+                          VM-APP-03
+                        </td>
+                        <td class="px-6 py-4">
+                          <span
+                            class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-semibold"
+                            >Inativo</span
+                          >
+                        </td>
+                        <td class="px-6 py-4 text-gray-600">2 vCPUs</td>
+                        <td class="px-6 py-4 text-gray-600">4 GB</td>
+                        <td class="px-6 py-4">
+                          <button
+                            class="text-blue-600 hover:text-blue-800 font-semibold text-sm"
+                          >
+                            Detalhes
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- CMDB -->
+            <div x-show="currentTab === 'cmdb'">
+              <header class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">Ì≥ã CMDB</h1>
+                <p class="text-gray-600 mt-1">
+                  Configuration Management Database
+                </p>
+              </header>
+              <!-- Cards e tabela de ativos (igual ao original) -->
+              <div
+                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+              >
+                <div
+                  class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-purple-500"
+                >
+                  <p class="text-sm text-gray-500 font-semibold uppercase">
+                    Total de Ativos
+                  </p>
+                  <h3 class="text-4xl font-bold text-gray-900 mt-2">256</h3>
+                </div>
+                <div
+                  class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-green-500"
+                >
+                  <p class="text-sm text-gray-500 font-semibold uppercase">
+                    Ativos Ativos
+                  </p>
+                  <h3 class="text-4xl font-bold text-gray-900 mt-2">240</h3>
+                </div>
+                <div
+                  class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-yellow-500"
+                >
+                  <p class="text-sm text-gray-500 font-semibold uppercase">
+                    Em Manuten√ß√£o
+                  </p>
+                  <h3 class="text-4xl font-bold text-gray-900 mt-2">8</h3>
+                </div>
+                <div
+                  class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-red-500"
+                >
+                  <p class="text-sm text-gray-500 font-semibold uppercase">
+                    Inativos
+                  </p>
+                  <h3 class="text-4xl font-bold text-gray-900 mt-2">8</h3>
+                </div>
+              </div>
+              <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div
+                  class="p-6 border-b border-gray-200 flex justify-between items-center"
+                >
+                  <h3 class="text-xl font-bold text-gray-800">
+                    Ativos Cadastrados
+                  </h3>
+                  <button
+                    class="px-5 py-2.5 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition shadow-lg"
+                  >
+                    + Novo Ativo
+                  </button>
+                </div>
+                <div class="overflow-x-auto">
+                  <table class="w-full">
+                    <thead class="bg-gray-50">
+                      <tr>
+                        <th
+                          class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase"
+                        >
+                          ID
+                        </th>
+                        <th
+                          class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase"
+                        >
+                          Nome
+                        </th>
+                        <th
+                          class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase"
+                        >
+                          Tipo
+                        </th>
+                        <th
+                          class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase"
+                        >
+                          Status
+                        </th>
+                        <th
+                          class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase"
+                        >
+                          A√ß√µes
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                      <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 text-sm text-gray-500">
+                          CMDB-001
+                        </td>
+                        <td class="px-6 py-4 font-semibold text-gray-900">
+                          Servidor Principal
+                        </td>
+                        <td class="px-6 py-4 text-gray-600">Servidor</td>
+                        <td class="px-6 py-4">
+                          <span
+                            class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold"
+                            >Ativo</span
+                          >
+                        </td>
+                        <td class="px-6 py-4">
+                          <button
+                            class="text-blue-600 hover:text-blue-800 font-semibold text-sm mr-3"
+                          >
+                            Editar</button
+                          ><button
+                            class="text-red-600 hover:text-red-800 font-semibold text-sm"
+                          >
+                            Excluir
+                          </button>
+                        </td>
+                      </tr>
+                      <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 text-sm text-gray-500">
+                          CMDB-002
+                        </td>
+                        <td class="px-6 py-4 font-semibold text-gray-900">
+                          Switch Core
+                        </td>
+                        <td class="px-6 py-4 text-gray-600">Rede</td>
+                        <td class="px-6 py-4">
+                          <span
+                            class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold"
+                            >Ativo</span
+                          >
+                        </td>
+                        <td class="px-6 py-4">
+                          <button
+                            class="text-blue-600 hover:text-blue-800 font-semibold text-sm mr-3"
+                          >
+                            Editar</button
+                          ><button
+                            class="text-red-600 hover:text-red-800 font-semibold text-sm"
+                          >
+                            Excluir
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Ideias -->
+            <div x-show="currentTab === 'ideias'">
+              <header class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">Ì≤° Ideias</h1>
+                <p class="text-gray-600 mt-1">
+                  Registre suas ideias e sugest√µes de melhorias
+                </p>
+              </header>
+
+              <div class="bg-white p-8 rounded-xl shadow-lg mb-8">
+                <h3 class="text-xl font-bold text-gray-800 mb-6">Nova Ideia</h3>
+                <form id="formIdeia" class="space-y-6">
+                  <div>
+                    <label
+                      class="block text-sm font-semibold text-gray-700 mb-2"
+                      >T√≠tulo</label
+                    ><input
+                      type="text"
+                      id="titulo"
+                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="Ex: Automatizar backup de VMs"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label
+                      class="block text-sm font-semibold text-gray-700 mb-2"
+                      >Descri√ß√£o</label
+                    ><textarea
+                      id="descricao"
+                      rows="5"
+                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="Descreva sua ideia em detalhes..."
+                      required
+                    ></textarea>
+                  </div>
+                  <div>
+                    <label
+                      class="block text-sm font-semibold text-gray-700 mb-2"
+                      >Autor</label
+                    ><input
+                      type="text"
+                      id="autor"
+                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="Seu nome"
+                      required
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    class="w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg font-bold hover:from-blue-700 hover:to-cyan-700 transition shadow-lg"
+                  >
+                    Registrar Ideia
+                  </button>
+                </form>
+              </div>
+
+              <div class="bg-white p-8 rounded-xl shadow-lg">
+                <h3 class="text-xl font-bold text-gray-800 mb-6">
+                  Ideias Registradas (<span id="totalIdeias">0</span>)
+                </h3>
+                <div id="listaIdeias" class="space-y-4">
+                  <p class="text-center text-gray-500 py-12">
+                    Nenhuma ideia registrada ainda. Seja o primeiro!
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function gpiApp() {
+        return {
+          currentScreen: "login",
+          currentTab: "dashboard",
+          loginForm: { email: "", password: "", remember: false },
+          searchQuery: "",
+          stats: {
+            total_documents: 24,
+            total_tips: 18,
+            total_links: 42,
+            total_views: 1245,
+          },
+
+          login() {
+            this.currentScreen = "loading";
+            setTimeout(() => {
+              this.currentScreen = "dashboard";
+            }, 2500);
+          },
+          logout() {
+            this.currentScreen = "login";
+            this.loginForm = { email: "", password: "", remember: false };
+          },
+          moveLetterAway(event, element) {
+            const rect = element.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const deltaX = event.clientX - centerX;
+            const deltaY = event.clientY - centerY;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            if (distance < 150) {
+              element.style.transform = `translate(${-deltaX / 3}px, ${
+                -deltaY / 3
+              }px) scale(1.1)`;
+            } else {
+              element.style.transform = "translate(0, 0) scale(1)";
+            }
+          },
+        };
+      }
+
+      // JavaScript completo das Ideias (funciona perfeitamente)
+      const ideias = [];
+      document.getElementById("formIdeia")?.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const titulo = document.getElementById("titulo").value;
+        const descricao = document.getElementById("descricao").value;
+        const autor = document.getElementById("autor").value;
+
+        ideias.push({
+          id: Date.now(),
+          titulo,
+          descricao,
+          autor,
+          data: new Date().toLocaleDateString("pt-BR"),
+        });
+
+        document.getElementById("totalIdeias").textContent = ideias.length;
+        document.getElementById("totalIdeiasHeader").textContent =
+          ideias.length;
+        renderIdeias();
+        e.target.reset();
+      });
+
+      function renderIdeias() {
+        const lista = document.getElementById("listaIdeias");
+        if (ideias.length === 0) {
+          lista.innerHTML =
+            '<p class="text-center text-gray-500 py-12">Nenhuma ideia registrada ainda. Seja o primeiro!</p>';
+          return;
+        }
+        lista.innerHTML = ideias
+          .map(
+            (ideia) => `
+          <div class="border border-gray-200 p-6 rounded-lg hover:shadow-lg transition">
+            <div class="flex justify-between items-start mb-3">
+              <h4 class="font-bold text-lg text-gray-800">${ideia.titulo}</h4>
+              <span class="text-sm text-gray-500">${ideia.data}</span>
+            </div>
+            <p class="text-gray-600 mb-4">${ideia.descricao}</p>
+            <p class="text-sm text-gray-500"><strong>Autor:</strong> ${ideia.autor}</p>
+          </div>
+        `
+          )
+          .join("");
+      }
+    </script>
+  </body>
+</html>
+</html>
