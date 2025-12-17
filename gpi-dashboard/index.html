@@ -1153,5 +1153,35 @@
           .join("");
       }
     </script>
+
+    <script>
+      function gpiApp() {
+        return {
+          currentScreen: "login",
+          currentTab: "vcenter_home",
+          isLoggingIn: false, // ← Nova flag anti-duplicação
+
+          login() {
+            if (this.isLoggingIn) return; // Evita clique múltiplo
+
+            this.isLoggingIn = true;
+            this.currentScreen = "loading";
+
+            setTimeout(() => {
+              this.currentScreen = "dashboard";
+              this.currentTab = "vcenter_home";
+              this.isLoggingIn = false; // Libera novamente
+            }, 2500);
+          },
+
+          logout() {
+            this.currentScreen = "login";
+            this.isLoggingIn = false;
+          },
+
+          // moveLetterAway permanece igual
+        };
+      }
+    </script>
   </body>
 </html>
