@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GPI Docs Manager - Login</title>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/daisyui@4.4.19/dist/full.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+    ></script>
+
+    <style>
+      [x-cloak] {
+        display: none !important;
+      }
+
+      /* ==========================================
+           TELA DE LOGIN ANIMADA
+           ========================================== */
+      .login-bg {
+        background: linear-gradient(-45deg, #0f172a, #1e293b, #312e81, #1e3a8a);
+        background-size: 400% 400%;
+        animation: gradient 15s ease infinite;
+      }
+
+      @keyframes gradient {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
+      .particle {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        animation: float 20s infinite;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0) translateX(0);
+          opacity: 0;
+        }
+        10% {
+          opacity: 1;
+        }
+        90% {
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(-100vh) translateX(50px);
+          opacity: 0;
+        }
+      }
+
+      #letters .letter {
+        transition: transform 0.3s ease;
+        cursor: pointer;
+        text-shadow: 0 0 20px rgba(59, 130, 246, 0.8),
+          0 0 40px rgba(59, 130, 246, 0.6), 0 0 60px rgba(59, 130, 246, 0.4);
+        animation: glow 2s ease-in-out infinite;
+      }
+
+      @keyframes glow {
+        0%,
+        100% {
+          text-shadow: 0 0 20px rgba(59, 130, 246, 0.8),
+            0 0 40px rgba(59, 130, 246, 0.6);
+        }
+        50% {
+          text-shadow: 0 0 30px rgba(59, 130, 246, 1),
+            0 0 60px rgba(59, 130, 246, 0.8), 0 0 90px rgba(59, 130, 246, 0.6);
+        }
+      }
+
+      .glass-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      }
+
+      .slide-up {
+        animation: slideUp 0.8s ease-out;
+      }
+
+      @keyframes slideUp {
+        from {
+          transform: translateY(100px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .btn-ripple {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn-ripple::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.5);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+      }
+
+      .btn-ripple:active::after {
+        width: 300px;
+        height: 300px;
+      }
+
+      /* ==========================================
+           LOADER DE TRANSIÇÃO (APÓS LOGIN)
+           ========================================== */
+      .loader {
+        display: flex;
+      }
+      .loader.hidden {
+        display: none;
+      }
+
+      @keyframes loading {
+        0% {
+          width: 0%;
+        }
+        100% {
+          width: 100%;
+        }
+      }
+
+      /* ==========================================
+           DASHBOARD
+           ========================================== */
+      .gradient-bg {
+        background: linear-gradient(
+          135deg,
+          #1e3a8a 0%,
+          #3b82f6 50%,
+          #06b6d4 100%
+        );
+      }
+
+      .gradient-sidebar {
+        background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+      }
+
+      .card-hover {
+        transition: all 0.3s ease;
+      }
+      .card-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .dashboard-enter {
+        animation: dashboardEnter 0.5s ease-out;
+      }
+
+      @keyframes dashboardEnter {
+        from {
+          opacity: 0;
+          transform: scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div x-data="gpiApp()" x-cloak>
+      <!-- ==========================================
+             TELA DE LOGIN
+             ========================================== -->
+      <div
+        x-show="currentScreen === 'login'"
+        class="login-bg fixed inset-0 flex items-center justify-center overflow-hidden"
+        x-transition:leave="transition ease-in duration-500"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+      >
+        <template x-for="i in 20" :key="i">
+          <div
+            class="particle"
+            :style="`
+              width: ${Math.random() * 60 + 20}px;
+              height: ${Math.random() * 60 + 20}px;
+              left: ${Math.random() * 100}%;
+              animation-delay: ${Math.random() * 20}s;
+              animation-duration: ${Math.random() * 10 + 15}s;
+            `"
+          ></div>
+        </template>
+
+        <div class="relative z-10 text-center">
+          <div id="letters" class="flex space-x-8 mb-12">
+            <span
+              class="letter text-white text-9xl font-black select-none"
+              @mousemove="moveLetterAway($event, $el)"
+              @click="login()"
+            >
+              G
+            </span>
+            <span
+              class="letter text-white text-9xl font-black select-none"
+              @mousemove="moveLetterAway($event, $el)"
+              @click="login()"
+            >
+              P
+            </span>
+            <span
+              class="letter text-white text-9xl font-black select-none"
+              @mousemove="moveLetterAway($event, $el)"
+              @click="login()"
+            >
+              I
+            </span>
+          </div>
+
+          <div class="glass-card rounded-3xl p-8 w-96 mx-auto slide-up">
+            <h2 class="text-3xl font-bold text-white mb-2">Bem-vindo! 👋</h2>
+            <p class="text-gray-300 mb-8">Entre para acessar seu sistema</p>
+
+            <form @submit.prevent="login()" class="space-y-6">
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text text-white">
+                    <i class="fas fa-envelope mr-2"></i>Email
+                  </span>
+                </label>
+                <input
+                  type="email"
+                  x-model="loginForm.email"
+                  placeholder="seu@email.com"
+                  class="input input-bordered w-full bg-white/10 text-white border-white/20 focus:border-blue-400"
+                  required
+                />
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text text-white">
+                    <i class="fas fa-lock mr-2"></i>Senha
+                  </span>
+                </label>
+                <input
+                  type="password"
+                  x-model="loginForm.password"
+                  placeholder="••••••••"
+                  class="input input-bordered w-full bg-white/10 text-white border-white/20 focus:border-blue-400"
+                  required
+                />
+              </div>
+
+              <div class="form-control">
+                <label class="label cursor-pointer justify-start gap-3">
+                  <input
+                    type="checkbox"
+                    class="checkbox checkbox-primary"
+                    x-model="loginForm.remember"
+                  />
+                  <span class="label-text text-white">Lembrar de mim</span>
+                </label>
+              </div>
+
+              <button
+                type="submit"
+                class="btn btn-primary btn-lg w-full btn-ripple text-lg font-semibold"
+              >
+                <i class="fas fa-sign-in-alt mr-2"></i>
+                Entrar
+              </button>
+            </form>
+
+            <div class="mt-6 text-center">
+              <a href="#" class="text-blue-400 hover:text-blue-300 text-sm">
+                Esqueceu sua senha?
+              </a>
+            </div>
+
+            <div
+              class="mt-8 p-4 bg-blue-500/20 rounded-xl border border-blue-400/30"
+            >
+              <p class="text-white text-xs mb-2">
+                <i class="fas fa-info-circle mr-1"></i>
+                <strong>Demo:</strong> Clique em qualquer letra ou pressione
+                Enter
+              </p>
+              <p class="text-white/70 text-xs">
+                Email: demo@gpi.com | Senha: qualquer
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==========================================
+             LOADER DE TRANSIÇÃO (APARECE APÓS LOGIN)
+             ========================================== -->
+      <div
+        x-show="currentScreen === 'loading'"
+        class="loader fixed inset-0 bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900 flex items-center justify-center z-50"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+      >
+        <div class="text-center">
+          <div class="flex space-x-8 mb-8">
+            <span
+              class="text-white text-9xl font-black animate-bounce"
+              style="animation-delay: 0s"
+              >G</span
+            >
+            <span
+              class="text-white text-9xl font-black animate-bounce"
+              style="animation-delay: 0.1s"
+              >P</span
+            >
+            <span
+              class="text-white text-9xl font-black animate-bounce"
+              style="animation-delay: 0.2s"
+              >I</span
+            >
+          </div>
+          <div
+            class="w-64 h-2 bg-white/20 rounded-full overflow-hidden mx-auto"
+          >
+            <div
+              class="h-full bg-gradient-to-r from-blue-400 to-pink-400"
+              style="animation: loading 2.5s ease-in-out forwards"
+            ></div>
+          </div>
+          <p class="text-white/80 text-sm mt-4 font-medium">
+            Carregando Sistema...
+          </p>
+        </div>
+      </div>
+
+      <!-- ==========================================
+             DASHBOARD PRINCIPAL
+             ========================================== -->
+      <div
+        x-show="currentScreen === 'dashboard'"
+        class="dashboard-enter"
+        x-transition:enter="transition ease-out duration-500"
+        x-transition:enter-start="opacity-0 scale-95"
+        x-transition:enter-end="opacity-100 scale-100"
+      >
+        <!-- Navbar -->
+        <div class="navbar gradient-bg text-white shadow-2xl sticky top-0 z-50">
+          <div class="flex-1">
+            <div class="flex items-center space-x-4 px-4">
+              <div class="bg-white/20 backdrop-blur-sm rounded-xl p-3">
+                <i class="fas fa-folder-open text-3xl"></i>
+              </div>
+              <div>
+                <h1 class="text-2xl font-bold tracking-tight">
+                  GPI Docs Manager
+                </h1>
+                <p class="text-xs opacity-90 flex items-center gap-2">
+                  <span class="relative flex h-2 w-2">
+                    <span
+                      class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"
+                    ></span>
+                    <span
+                      class="relative inline-flex rounded-full h-2 w-2 bg-green-500"
+                    ></span>
+                  </span>
+                  Sistema Online
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex-none gap-2">
+            <input
+              type="text"
+              placeholder="🔍 Buscar..."
+              class="input input-bordered input-sm w-80 text-gray-800 bg-white/90"
+              x-model="searchQuery"
+            />
+
+            <div class="indicator">
+              <span class="indicator-item badge badge-error badge-sm">3</span>
+              <button class="btn btn-ghost btn-circle">
+                <i class="fas fa-bell text-xl"></i>
+              </button>
+            </div>
+
+            <div class="dropdown dropdown-end">
+              <label tabindex="0" class="btn btn-ghost btn-circle avatar">
+                <div
+                  class="w-10 rounded-full bg-white/20 flex items-center justify-center"
+                >
+                  <i class="fas fa-user text-xl"></i>
+                </div>
+              </label>
+              <ul
+                tabindex="0"
+                class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow-xl bg-base-100 rounded-box w-52 text-gray-800"
+              >
+                <li class="menu-title"><span>Ruan Carvalho</span></li>
+                <li>
+                  <a><i class="fas fa-user mr-2"></i>Meu Perfil</a>
+                </li>
+                <li>
+                  <a><i class="fas fa-cog mr-2"></i>Configurações</a>
+                </li>
+                <li class="border-t mt-2 pt-2">
+                  <a @click="logout()" class="text-error">
+                    <i class="fas fa-sign-out-alt mr-2"></i>Sair
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex">
+          <!-- Sidebar -->
+          <div class="w-72 min-h-screen gradient-sidebar text-white shadow-2xl">
+            <div class="p-6">
+              <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-6">
+                <div class="flex items-center space-x-3">
+                  <div class="avatar placeholder">
+                    <div class="bg-blue-500 text-white rounded-full w-12">
+                      <span class="text-xl">RC</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p class="font-semibold">Ruan Carvalho</p>
+                    <p class="text-xs opacity-75">Administrador</p>
+                  </div>
+                </div>
+              </div>
+
+              <ul class="menu p-0 space-y-2">
+                <li class="menu-title">
+                  <span class="text-white/60 text-xs">NAVEGAÇÃO</span>
+                </li>
+                <li>
+                  <a
+                    @click="currentTab = 'dashboard'"
+                    :class="currentTab === 'dashboard' ? 'active bg-blue-600 text-white' : 'text-white/80 hover:bg-white/10'"
+                    class="rounded-lg"
+                  >
+                    <i class="fas fa-chart-line text-lg"></i>
+                    <span class="font-medium">Dashboard</span>
+                  </a>
+                </li>
+                <li>
+                  <a
+                    @click="currentTab = 'documents'"
+                    :class="currentTab === 'documents' ? 'active bg-blue-600 text-white' : 'text-white/80 hover:bg-white/10'"
+                    class="rounded-lg"
+                  >
+                    <i class="fas fa-file-alt text-lg"></i>
+                    <span class="font-medium">Documentos</span>
+                    <span
+                      class="badge badge-sm bg-blue-500 border-0"
+                      x-text="stats.total_documents"
+                      >24</span
+                    >
+                  </a>
+                </li>
+                <li>
+                  <a
+                    @click="currentTab = 'tips'"
+                    :class="currentTab === 'tips' ? 'active bg-blue-600 text-white' : 'text-white/80 hover:bg-white/10'"
+                    class="rounded-lg"
+                  >
+                    <i class="fas fa-lightbulb text-lg"></i>
+                    <span class="font-medium">Dicas Léo & Pita</span>
+                    <span
+                      class="badge badge-sm bg-green-500 border-0"
+                      x-text="stats.total_tips"
+                      >18</span
+                    >
+                  </a>
+                </li>
+                <li>
+                  <a
+                    @click="currentTab = 'links'"
+                    :class="currentTab === 'links' ? 'active bg-blue-600 text-white' : 'text-white/80 hover:bg-white/10'"
+                    class="rounded-lg"
+                  >
+                    <i class="fas fa-link text-lg"></i>
+                    <span class="font-medium">Links Úteis</span>
+                    <span
+                      class="badge badge-sm bg-purple-500 border-0"
+                      x-text="stats.total_links"
+                      >42</span
+                    >
+                  </a>
+                </li>
+              </ul>
+
+              <div class="mt-8 p-4 bg-white/10 backdrop-blur-sm rounded-xl">
+                <div class="flex justify-between text-xs mb-2">
+                  <span>Armazenamento</span>
+                  <span>3.2 GB / 10 GB</span>
+                </div>
+                <progress
+                  class="progress progress-primary w-full"
+                  value="32"
+                  max="100"
+                ></progress>
+                <p class="text-xs opacity-75 mt-2">32% utilizado</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main Content -->
+          <div class="flex-1 p-8 bg-gray-50">
+            <div x-show="currentTab === 'dashboard'">
+              <div class="mb-8">
+                <h2 class="text-4xl font-bold text-gray-800 mb-2">Dashboard</h2>
+                <p class="text-gray-600">
+                  Bem-vindo de volta! Aqui está um resumo do seu sistema.
+                </p>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div
+                  class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl shadow-xl card-hover p-6"
+                >
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="text-sm opacity-90 mb-1">Total Documentos</p>
+                      <p
+                        class="text-5xl font-bold"
+                        x-text="stats.total_documents"
+                      >
+                        24
+                      </p>
+                      <p class="text-xs opacity-75 mt-2">
+                        <i class="fas fa-arrow-up mr-1"></i>12% este mês
+                      </p>
+                    </div>
+                    <div class="bg-white/20 backdrop-blur-sm rounded-2xl p-4">
+                      <i class="fas fa-file-alt text-5xl"></i>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-2xl shadow-xl card-hover p-6"
+                >
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="text-sm opacity-90 mb-1">Dicas Salvas</p>
+                      <p class="text-5xl font-bold" x-text="stats.total_tips">
+                        18
+                      </p>
+                      <p class="text-xs opacity-75 mt-2">
+                        <i class="fas fa-lightbulb mr-1"></i>Léo & Pita
+                      </p>
+                    </div>
+                    <div class="bg-white/20 backdrop-blur-sm rounded-2xl p-4">
+                      <i class="fas fa-brain text-5xl"></i>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-2xl shadow-xl card-hover p-6"
+                >
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="text-sm opacity-90 mb-1">Links Úteis</p>
+                      <p class="text-5xl font-bold" x-text="stats.total_links">
+                        42
+                      </p>
+                      <p class="text-xs opacity-75 mt-2">
+                        <i class="fas fa-bookmark mr-1"></i>Organizados
+                      </p>
+                    </div>
+                    <div class="bg-white/20 backdrop-blur-sm rounded-2xl p-4">
+                      <i class="fas fa-link text-5xl"></i>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  class="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-2xl shadow-xl card-hover p-6"
+                >
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="text-sm opacity-90 mb-1">Visualizações</p>
+                      <p class="text-5xl font-bold" x-text="stats.total_views">
+                        1.2k
+                      </p>
+                      <p class="text-xs opacity-75 mt-2">
+                        <i class="fas fa-eye mr-1"></i>Esta semana
+                      </p>
+                    </div>
+                    <div class="bg-white/20 backdrop-blur-sm rounded-2xl p-4">
+                      <i class="fas fa-chart-line text-5xl"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div x-show="currentTab === 'documents'">
+              <h2 class="text-4xl font-bold text-gray-800 mb-4">Documentos</h2>
+              <p class="text-gray-600">📄 Gerencie todos os seus arquivos</p>
+            </div>
+
+            <div x-show="currentTab === 'tips'">
+              <h2 class="text-4xl font-bold text-gray-800 mb-4">
+                Dicas do Léo & Pita
+              </h2>
+              <p class="text-gray-600">💡 Conhecimento da equipe organizado</p>
+            </div>
+
+            <div x-show="currentTab === 'links'">
+              <h2 class="text-4xl font-bold text-gray-800 mb-4">Links Úteis</h2>
+              <p class="text-gray-600">🔗 Seus sites favoritos organizados</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function gpiApp() {
+        return {
+          // Controle de telas: 'login', 'loading', 'dashboard'
+          currentScreen: "login",
+
+          // Formulário de login
+          loginForm: {
+            email: "",
+            password: "",
+            remember: false,
+          },
+
+          // Estado do dashboard
+          currentTab: "dashboard",
+          searchQuery: "",
+          stats: {
+            total_documents: 24,
+            total_tips: 18,
+            total_links: 42,
+            total_views: 1245,
+          },
+
+          // Inicialização
+          init() {
+            console.log("🚀 GPI Docs Manager Iniciado!");
+          },
+
+          // Função de login - Mostra o loader e depois o dashboard
+          login() {
+            console.log("✅ Login realizado!", this.loginForm);
+
+            // 1. Muda para a tela de loading
+            this.currentScreen = "loading";
+
+            // 2. Após 2.5 segundos, mostra o dashboard
+            setTimeout(() => {
+              this.currentScreen = "dashboard";
+            }, 2500);
+          },
+
+          // Função de logout
+          logout() {
+            console.log("👋 Logout realizado!");
+            this.currentScreen = "login";
+            this.loginForm = { email: "", password: "", remember: false };
+          },
+
+          // Função para fazer letras fugirem do mouse
+          moveLetterAway(event, element) {
+            const rect = element.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            const mouseX = event.clientX;
+            const mouseY = event.clientY;
+
+            const deltaX = mouseX - centerX;
+            const deltaY = mouseY - centerY;
+
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+            if (distance < 150) {
+              const force = (150 - distance) / 3;
+              element.style.transform = `translate(${-deltaX / 3}px, ${
+                -deltaY / 3
+              }px) scale(1.1)`;
+            } else {
+              element.style.transform = "translate(0, 0) scale(1)";
+            }
+          },
+        };
+      }
+    </script>
+  </body>
+</html>
